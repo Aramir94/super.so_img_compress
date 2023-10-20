@@ -1,27 +1,25 @@
 import streamlit as st
 from PIL import Image, ImageSequence
 import io
+import base64
 
 def compress_and_convert_to_jpg(img, quality=85):
-    """
-    이미지를 압축하고 JPG로 변환하여 바이트로 반환합니다.
-    """
     buffered = io.BytesIO()
     img.convert('RGB').save(buffered, format="JPEG", quality=quality)
     return buffered.getvalue()
 
-def compress_gif(img, quality=85):
-    """
-    GIF 이미지의 각 프레임 퀄리티를 줄입니다.
-    """
+def compress_gif(img, quality=85, frame_interval=100):
     frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
     buffered = io.BytesIO()
-    frames[0].save(buffered, format="GIF", append_images=frames[1:], save_all=True, quality=quality, loop=0)
+    frames[0].save(buffered, format="GIF", append_images=frames[1:], save_all=True, quality=quality, loop=0, duration=frame_interval)
     return buffered.getvalue()
+
+def image_to_base64(img_data):
+    img_str = base64.b64encode(img_data).decode()
+    return f"data:image/gif;base64,{img_str}"
 
 st.title('Image & GIF Compressor')
 
-# 선택 모드 (이미지 또는 GIF)
 mode = st.sidebar.selectbox("Choose mode", ["Image", "GIF"])
 
 if mode == "Image":
@@ -29,7 +27,7 @@ if mode == "Image":
     processing_function = compress_and_convert_to_jpg
     download_format = "image/jpeg"
     download_name = "compressed.jpg"
-else:  # mode == "GIF":
+else:
     file_type = ['gif']
     processing_function = compress_gif
     download_format = "image/gif"
@@ -42,33 +40,38 @@ if uploaded_file:
     original_size = len(uploaded_file.read())
     uploaded_file.seek(0)
     img = Image.open(uploaded_file)
-    
-    compressed_img_data = processing_function(img, quality)
+
+    if mode == "GIF":
+        frame_interval = st.sidebar.slider('Frame Interval (ms)', 10, 500, 100)
+        compressed_img_data = processing_function(img, quality, frame_interval)
+    else:
+        compressed_img_data = processing_function(img, quality)
+
     compressed_size = len(compressed_img_data)
-    
     col1, col2 = st.columns(2)
-    
+
     with col1:
+        st.write(f"Uploaded {mode}:")
         if mode == "Image":
-            st.image(img, caption="Uploaded Image.", width=300)
+            st.image(uploaded_file.getvalue(), width=300)
         else:
-            st.image(img, caption="Uploaded GIF.", width=300)  # 수정된 부분
+            st.markdown(f'<img src="{image_to_base64(uploaded_file.getvalue())}" width="300">', unsafe_allow_html=True)
         st.write(f"Original Size: {original_size / 1024:.2f} KB")
-        
+
     with col2:
+        st.write(f"Compressed {mode}:")
         if mode == "Image":
-            st.image(compressed_img_data, caption="Compressed Image.", width=300)
+            st.image(compressed_img_data, width=300)
         else:
-            st.image(compressed_img_data, caption="Compressed GIF.", width=300)  # 수정된 부분
+            st.markdown(f'<img src="{image_to_base64(compressed_img_data)}" width="300">', unsafe_allow_html=True)
         st.write(f"Compressed Size: {compressed_size / 1024:.2f} KB")
-    
+
     st.sidebar.download_button(f"Download Compressed {mode}", compressed_img_data, download_name, download_format)
 
-    download_speed = 5 * 1024 * 1024  # 5 MB/s in bytes
+    download_speed = 5 * 1024 * 1024
     estimated_time_original = original_size / download_speed
     estimated_time_compressed = compressed_size / download_speed
-    
+
     st.write(f"Estimated load time (at 5MB/s):")
     st.write(f"Original {mode}: {estimated_time_original:.2f} seconds")
     st.write(f"Compressed {mode}: {estimated_time_compressed:.2f} seconds")
-

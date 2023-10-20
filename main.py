@@ -8,6 +8,13 @@ def get_image_with_href(data, file_name="image", file_type="jpeg"):
     href = f'<a href="data:image/{file_type};base64,{encoded}" download="{file_name}.{file_type}"><img src="data:image/{file_type};base64,{encoded}" width=300/></a>'
     return href
 
+def download_button(buffer, file_name, file_type):
+    """
+    Generates a link to download the given image file.
+    """
+    b64 = base64.b64encode(buffer).decode()
+    return f'<a href="data:image/{file_type};base64,{b64}" download="{file_name}.{file_type}">Download {file_name}</a>'
+
 def compress_and_convert_to_jpg(img, quality=85):
     buffered = io.BytesIO()
     img.convert('RGB').save(buffered, format="JPEG", quality=quality)
@@ -66,3 +73,8 @@ if uploaded_file:
     st.write(f"Estimated load time (at 5MB/s):")
     st.write(f"Original {mode}: {estimated_time_original:.2f} seconds")
     st.write(f"Compressed {mode}: {estimated_time_compressed:.2f} seconds")
+
+    # 사이드바에 다운로드 버튼 추가
+    if st.sidebar.button("Download Compressed"):
+        href = f'<a href="data:image/{download_format};base64,{base64.b64encode(compressed_img_data).decode()}" download="{download_name}.{download_format}">Click here to start download</a>'
+        st.sidebar.markdown(href, unsafe_allow_html=True)

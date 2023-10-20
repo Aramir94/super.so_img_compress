@@ -59,4 +59,5 @@ if uploaded_file:
     st.write(f"Compressed {mode}: {estimated_time_compressed:.2f} seconds")
 
     # 사이드바에 다운로드 버튼 추가
-    st.sidebar.download_button(f"Download Compressed {mode}", compressed_img_data, file_name=f"{download_name}.{download_format}", mime=download_format)
+    mime_type = "image/jpeg" if mode == "Image" else "image/gif"
+    st.sidebar.download_button(f"Download Compressed {mode}", compressed_img_data, file_name=f"{download_name}.{download_format}", mime=mime_type)

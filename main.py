@@ -3,6 +3,21 @@ from PIL import Image, ImageSequence
 import io
 import base64
 
+def create_download_link(buffer, file_name, file_type):
+    """
+    Generates a link to download the given image file using JavaScript.
+    """
+    b64 = base64.b64encode(buffer).decode()
+    href = f'<a download="{file_name}.{file_type}" id="download_link" href="data:image/{file_type};base64,{b64}"></a>'
+    download_js = """
+    <script>
+        var link = document.getElementById('download_link');
+        link.click();
+    </script>
+    """
+    return href + download_js
+
+
 def get_image_with_href(data, file_name="image", file_type="jpeg"):
     encoded = base64.b64encode(data).decode()
     href = f'<a href="data:image/{file_type};base64,{encoded}" download="{file_name}.{file_type}"><img src="data:image/{file_type};base64,{encoded}" width=300/></a>'
@@ -76,5 +91,5 @@ if uploaded_file:
 
     # 사이드바에 다운로드 버튼 추가
     if st.sidebar.button("Download Compressed"):
-        href = f'<a href="data:image/{download_format};base64,{base64.b64encode(compressed_img_data).decode()}" download="{download_name}.{download_format}">Click here to start download</a>'
-        st.sidebar.markdown(href, unsafe_allow_html=True)
+        download_link = create_download_link(compressed_img_data, download_name, download_format)
+        st.sidebar.markdown(download_link, unsafe_allow_html=True)

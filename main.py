@@ -1,41 +1,6 @@
 import streamlit as st
 from PIL import Image, ImageSequence
 import io
-import base64
-
-def create_download_link(buffer, file_name, file_type):
-    """
-    Generates a link to download the given image file using JavaScript.
-    """
-    b64 = base64.b64encode(buffer).decode()
-    href = f'<a download="{file_name}.{file_type}" id="download_link" href="data:image/{file_type};base64,{b64}"></a>'
-    download_js = """
-    <script>
-        var link = document.getElementById('download_link');
-        link.click();
-    </script>
-    """
-    return href + download_js
-
-def get_download_link(buffer, file_name, file_type):
-    """
-    Generates a link allowing the data in a given buffer to be downloaded.
-    """
-    b64 = base64.b64encode(buffer).decode()
-    return f'<a href="data:image/{file_type};base64,{b64}" download="{file_name}.{file_type}">Download</a>'
-
-
-def get_image_with_href(data, file_name="image", file_type="jpeg"):
-    encoded = base64.b64encode(data).decode()
-    href = f'<a href="data:image/{file_type};base64,{encoded}" download="{file_name}.{file_type}"><img src="data:image/{file_type};base64,{encoded}" width=300/></a>'
-    return href
-
-def download_button(buffer, file_name, file_type):
-    """
-    Generates a link to download the given image file.
-    """
-    b64 = base64.b64encode(buffer).decode()
-    return f'<a href="data:image/{file_type};base64,{b64}" download="{file_name}.{file_type}">Download {file_name}</a>'
 
 def compress_and_convert_to_jpg(img, quality=85):
     buffered = io.BytesIO()
@@ -50,9 +15,9 @@ def compress_gif(img, quality=85, skip_frames=1, frame_interval=100):
 
 st.title('Image & GIF Compressor')
 
-mode = st.sidebar.selectbox("Choose mode", ["Image", "GIF"])
+mode = st.sidebar.selectbox("Choose mode", ["Image", "GIF"], key='mode_select')
 
-uploaded_file = st.sidebar.file_uploader("Choose a file...", type=['png', 'jpeg', 'jpg', 'bmp', 'tiff', 'gif'])
+uploaded_file = st.sidebar.file_uploader("Choose a file...", type=['png', 'jpeg', 'jpg', 'bmp', 'tiff', 'gif'], key='unique_file_uploader_key')
 
 if mode == "Image":
     quality = st.sidebar.slider('Select JPG Quality', 10, 100, 85)
@@ -78,14 +43,11 @@ if uploaded_file:
     col1, col2 = st.columns(2)
 
     with col1:
-        if mode == "Image":
-            st.image(uploaded_file, caption="Original", width=300)
-        else:
-            st.markdown(get_image_with_href(uploaded_file.getvalue(), "original", "gif"), unsafe_allow_html=True)
+        st.image(uploaded_file, caption="Original", width=300)
         st.write(f"Original Size: {original_size / 1024:.2f} KB")
 
     with col2:
-        st.markdown(get_image_with_href(compressed_img_data, download_name, download_format), unsafe_allow_html=True)
+        st.image(compressed_img_data, caption="Compressed", width=300)
         st.write(f"Compressed Size: {compressed_size / 1024:.2f} KB")
 
     download_speed = 5 * 1024 * 1024  # 5 MB/s in bytes
@@ -97,5 +59,4 @@ if uploaded_file:
     st.write(f"Compressed {mode}: {estimated_time_compressed:.2f} seconds")
 
     # 사이드바에 다운로드 버튼 추가
-    if st.sidebar.button("Prepare Download"):
-        st.sidebar.markdown(get_download_link(compressed_img_data, download_name, download_format), unsafe_allow_html=True)
+    st.sidebar.download_button(f"Download Compressed {mode}", compressed_img_data, file_name=f"{download_name}.{download_format}", mime=download_format)

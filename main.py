@@ -10,11 +10,11 @@ def compress_and_convert_to_jpg(img, quality=85):
     img.convert('RGB').save(buffered, format="JPEG", quality=quality)
     return buffered.getvalue()
 
-def compress_gif(img, quality=85, frame_skip=2):
+def compress_gif(img, quality=85):
     """
-    GIF 이미지의 각 프레임 퀄리티를 줄이고 프레임 수를 줄입니다.
+    GIF 이미지의 각 프레임 퀄리티를 줄입니다.
     """
-    frames = [frame.copy() for index, frame in enumerate(ImageSequence.Iterator(img)) if index % frame_skip == 0]
+    frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
     buffered = io.BytesIO()
     frames[0].save(buffered, format="GIF", append_images=frames[1:], save_all=True, quality=quality, loop=0)
     return buffered.getvalue()
@@ -34,8 +34,6 @@ else:  # mode == "GIF":
     processing_function = compress_gif
     download_format = "image/gif"
     download_name = "compressed.gif"
-    frame_skip = st.sidebar.slider('Select frame skip', 1, 5, 2)
-    st.sidebar.text('Every nth frame will be kept.')
 
 uploaded_file = st.sidebar.file_uploader("Choose a file...", type=file_type)
 quality = st.sidebar.slider('Select Quality', 10, 100, 85)
@@ -45,21 +43,23 @@ if uploaded_file:
     uploaded_file.seek(0)
     img = Image.open(uploaded_file)
     
-    if mode == "GIF":
-        compressed_img_data = processing_function(img, quality, frame_skip)
-    else:
-        compressed_img_data = processing_function(img, quality)
-    
+    compressed_img_data = processing_function(img, quality)
     compressed_size = len(compressed_img_data)
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.image(img, caption="Uploaded Image/GIF.", width=300)
+        if mode == "Image":
+            st.image(img, caption="Uploaded Image.", width=300)
+        else:
+            st.image(img, caption="Uploaded GIF.", format="GIF", width=300)  # GIF 재생을 위한 format 인자 추가
         st.write(f"Original Size: {original_size / 1024:.2f} KB")
         
     with col2:
-        st.image(compressed_img_data, caption="Compressed Image/GIF.", width=300)
+        if mode == "Image":
+            st.image(compressed_img_data, caption="Compressed Image.", width=300)
+        else:
+            st.image(compressed_img_data, caption="Compressed GIF.", format="GIF", width=300)  # GIF 재생을 위한 format 인자 추가
         st.write(f"Compressed Size: {compressed_size / 1024:.2f} KB")
     
     st.sidebar.download_button(f"Download Compressed {mode}", compressed_img_data, download_name, download_format)

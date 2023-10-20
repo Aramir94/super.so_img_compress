@@ -1,6 +1,12 @@
 import streamlit as st
 from PIL import Image, ImageSequence
 import io
+import base64
+
+def get_image_with_href(data, file_name="image", file_type="jpeg"):
+    encoded = base64.b64encode(data).decode()
+    href = f'<img src="data:image/{file_type};base64,{encoded}" width=300/>'
+    return href
 
 def compress_and_convert_to_jpg(img, quality=85):
     buffered = io.BytesIO()
@@ -43,11 +49,17 @@ if uploaded_file:
     col1, col2 = st.columns(2)
 
     with col1:
-        st.image(uploaded_file, caption="Original", width=300)
+        if mode == "Image":
+            st.image(uploaded_file, caption="Original", width=300)
+        else:
+            st.markdown(get_image_with_href(uploaded_file.getvalue(), "original", "gif"), unsafe_allow_html=True)
         st.write(f"Original Size: {original_size / 1024:.2f} KB")
 
     with col2:
-        st.image(compressed_img_data, caption="Compressed", width=300)
+        if mode == "Image":
+            st.image(compressed_img_data, caption="Compressed", width=300)
+        else:
+            st.markdown(get_image_with_href(compressed_img_data, download_name, download_format), unsafe_allow_html=True)
         st.write(f"Compressed Size: {compressed_size / 1024:.2f} KB")
 
     download_speed = 5 * 1024 * 1024  # 5 MB/s in bytes

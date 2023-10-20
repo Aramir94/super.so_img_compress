@@ -42,7 +42,7 @@ if uploaded_file:
 
     # 로드 시간 예상치 계산 (예: 5MB/s 속도로 다운로드할 경우)
     download_speed = 5 * 1024 * 1024  # 5 MB/s in bytes
-    estimated_time_original = original_Size / download_speed
+    estimated_time_original = original_size / download_speed
     estimated_time_compressed = compressed_size / download_speed
 
     st.write(f"Estimated load time (at 5MB/s):")

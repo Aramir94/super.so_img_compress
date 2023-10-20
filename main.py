@@ -22,6 +22,7 @@ if uploaded_file:
     uploaded_file.seek(0)
     img = Image.open(uploaded_file)
     
+    st.write(f"We recommend 60 ~ 85")
     quality = st.slider('Select JPG Quality', 10, 100, 85)
     compressed_img_data = compress_and_convert_to_jpg(img, quality)
     compressed_size = len(compressed_img_data)
@@ -41,6 +42,9 @@ if uploaded_file:
 
     # 로드 시간 예상치 계산 (예: 5MB/s 속도로 다운로드할 경우)
     download_speed = 5 * 1024 * 1024  # 5 MB/s in bytes
+    estimated_time_original = original_Size / download_speed
     estimated_time_compressed = compressed_size / download_speed
-    st.write(f"Estimated load time for compressed image (at 5MB/s): {estimated_time_compressed:.2f} seconds")
 
+    st.write(f"Estimated load time (at 5MB/s):")
+    st.write(f"Original Image: {estimated_time_original:.2f} seconds")
+    st.write(f"Compressed Image: {estimated_time_compressed:.2f} seconds")

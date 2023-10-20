@@ -52,14 +52,14 @@ if uploaded_file:
         if mode == "Image":
             st.image(img, caption="Uploaded Image.", width=300)
         else:
-            st.image(img, caption="Uploaded GIF.", format="GIF", width=300)  # GIF 재생을 위한 format 인자 추가
+            st.image(img, caption="Uploaded GIF.", width=300)  # 수정된 부분
         st.write(f"Original Size: {original_size / 1024:.2f} KB")
         
     with col2:
         if mode == "Image":
             st.image(compressed_img_data, caption="Compressed Image.", width=300)
         else:
-            st.image(compressed_img_data, caption="Compressed GIF.", format="GIF", width=300)  # GIF 재생을 위한 format 인자 추가
+            st.image(compressed_img_data, caption="Compressed GIF.", width=300)  # 수정된 부분
         st.write(f"Compressed Size: {compressed_size / 1024:.2f} KB")
     
     st.sidebar.download_button(f"Download Compressed {mode}", compressed_img_data, download_name, download_format)

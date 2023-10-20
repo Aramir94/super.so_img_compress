@@ -1,5 +1,5 @@
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageSequence
 import io
 
 def compress_and_convert_to_jpg(img, quality=85):
@@ -10,41 +10,59 @@ def compress_and_convert_to_jpg(img, quality=85):
     img.convert('RGB').save(buffered, format="JPEG", quality=quality)
     return buffered.getvalue()
 
-st.title('Image Compressor & JPG Converter')
+def compress_gif(img, quality=85):
+    """
+    GIF 이미지의 각 프레임 퀄리티를 줄입니다.
+    """
+    frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
+    buffered = io.BytesIO()
+    frames[0].save(buffered, format="GIF", append_images=frames[1:], save_all=True, quality=quality, loop=0)
+    return buffered.getvalue()
 
-# 사이드바에 업로드 및 퀄리티 슬라이더 배치
-uploaded_file = st.sidebar.file_uploader("Choose an image...", type=['png', 'jpeg', 'jpg', 'bmp', 'tiff'])
-quality = st.sidebar.slider('Select JPG Quality', 10, 100, 85)
+st.title('Image & GIF Compressor')
+
+# 선택 모드 (이미지 또는 GIF)
+mode = st.sidebar.selectbox("Choose mode", ["Image", "GIF"])
+
+if mode == "Image":
+    file_type = ['png', 'jpeg', 'jpg', 'bmp', 'tiff']
+    processing_function = compress_and_convert_to_jpg
+    download_format = "image/jpeg"
+    download_name = "compressed.jpg"
+else:  # mode == "GIF":
+    file_type = ['gif']
+    processing_function = compress_gif
+    download_format = "image/gif"
+    download_name = "compressed.gif"
+
+uploaded_file = st.sidebar.file_uploader("Choose a file...", type=file_type)
+quality = st.sidebar.slider('Select Quality', 10, 100, 85)
 
 if uploaded_file:
     original_size = len(uploaded_file.read())
-    # 파일 포인터를 다시 처음으로 되돌리기 위함
     uploaded_file.seek(0)
     img = Image.open(uploaded_file)
     
-    compressed_img_data = compress_and_convert_to_jpg(img, quality)
+    compressed_img_data = processing_function(img, quality)
     compressed_size = len(compressed_img_data)
     
-    # 컬럼으로 이미지를 나누기
     col1, col2 = st.columns(2)
     
     with col1:
-        st.image(img, caption="Uploaded Image.", width=300)  # 이미지 크기를 조정
-        st.write(f"Original Image Size: {original_size / 1024:.2f} KB")
+        st.image(img, caption="Uploaded Image/GIF.", width=300)
+        st.write(f"Original Size: {original_size / 1024:.2f} KB")
         
     with col2:
-        st.image(compressed_img_data, caption="Compressed Image.", width=300)  # 이미지 크기를 조정
-        st.write(f"Compressed Image Size: {compressed_size / 1024:.2f} KB")
+        st.image(compressed_img_data, caption="Compressed Image/GIF.", width=300)
+        st.write(f"Compressed Size: {compressed_size / 1024:.2f} KB")
     
-    # 사이드바에 다운로드 버튼 배치
-    st.sidebar.download_button("Download Compressed JPG", compressed_img_data, "compressed.jpg", "image/jpeg")
+    st.sidebar.download_button(f"Download Compressed {mode}", compressed_img_data, download_name, download_format)
 
-    # 로드 시간 예상치 계산 (예: 5MB/s 속도로 다운로드할 경우)
     download_speed = 5 * 1024 * 1024  # 5 MB/s in bytes
     estimated_time_original = original_size / download_speed
     estimated_time_compressed = compressed_size / download_speed
     
     st.write(f"Estimated load time (at 5MB/s):")
-    st.write(f"Original Image: {estimated_time_original:.2f} seconds")
-    st.write(f"Compressed Image: {estimated_time_compressed:.2f} seconds")
+    st.write(f"Original {mode}: {estimated_time_original:.2f} seconds")
+    st.write(f"Compressed {mode}: {estimated_time_compressed:.2f} seconds")
 

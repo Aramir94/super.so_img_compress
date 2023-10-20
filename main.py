@@ -17,6 +17,13 @@ def create_download_link(buffer, file_name, file_type):
     """
     return href + download_js
 
+def get_download_link(buffer, file_name, file_type):
+    """
+    Generates a link allowing the data in a given buffer to be downloaded.
+    """
+    b64 = base64.b64encode(buffer).decode()
+    return f'<a href="data:image/{file_type};base64,{b64}" download="{file_name}.{file_type}">Download</a>'
+
 
 def get_image_with_href(data, file_name="image", file_type="jpeg"):
     encoded = base64.b64encode(data).decode()
@@ -90,6 +97,5 @@ if uploaded_file:
     st.write(f"Compressed {mode}: {estimated_time_compressed:.2f} seconds")
 
     # 사이드바에 다운로드 버튼 추가
-    if st.sidebar.button("Download Compressed"):
-        download_link = create_download_link(compressed_img_data, download_name, download_format)
-        st.sidebar.markdown(download_link, unsafe_allow_html=True)
+    if st.sidebar.button("Prepare Download"):
+        st.sidebar.markdown(get_download_link(compressed_img_data, download_name, download_format), unsafe_allow_html=True)
